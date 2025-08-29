@@ -1,1 +1,1 @@
-Siomay RUNO Telegram bot usong esp8266
+Siomay RUNO Telegram bot using esp8266
