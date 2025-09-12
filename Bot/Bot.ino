@@ -25,11 +25,186 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 WiFiClientSecure client;
 AsyncTelegram2 myBot(client);
 
+struct Product {
+    String name;
+    int quantity; 
+    int price;
+};
+
 void displayLCD(const char *pesan1, const char *pesan2) {
   lcd.setCursor((16 / 2) - (strlen(pesan1) / 2),0);
   lcd.print(pesan1);
   lcd.setCursor((16 / 2) - (strlen(pesan2) / 2),1);
   lcd.print(pesan2);
+}
+
+Product getProduct(String name){
+  // get spesific product data
+
+  struct Product product;
+
+  // call database
+
+  return product;
+}
+
+void storeData(struct Product product, String index){
+
+}
+
+int updateQuantity(int a, int b, String operatorStr){
+  if (operatorStr.equals("+")) {
+      return b - a;
+  } else if (operatorStr.equals("-")) {
+      return b - a;
+  } else {
+      return b; 
+  }
+}
+
+void getStock(TBMessage msg) {
+  // get all product data
+
+  myBot.sendMessage(msg, "Get product stock");
+}
+
+void updateProduct(long chatId) {
+  // show stock
+
+  myBot.sendTo(chatId, String("type /done to end the sesion"));
+  myBot.sendTo(chatId, String("wich product will be updated?"));
+
+  String status = "/start"; 
+  String messages[3];
+  struct Product product;
+  TBMessage msg;
+
+  do {
+    if (myBot.getNewMessage(msg)) {
+      msg.text.trim();
+
+      if (msg.text.equals("/done")) {
+        myBot.sendMessage(msg, "Cancel update item");
+        status = msg.text;
+
+      } else if (status.equals("/start")){
+        // get from database
+        product = getProduct(msg.text);
+        
+        // null checking
+          // set status to /done if there is no product
+        
+
+        myBot.sendMessage(msg, "How many? [-/+].[quantity]");
+        status = "/quantity";
+
+      } else if (status.equals("/quantity")){
+        int quantity = msg.text.substring(3).toInt();
+
+        // update quantity of the product
+        product.quantity = updateQuantity(quantity, product.quantity, msg.text.substring(0, 1));
+
+        myBot.sendMessage(msg, "update product price? [n/y].[number]");
+        status = "/price";
+
+      } else if (status.equals("/price")){
+        if (msg.text.charAt(0) == 'y' || msg.text.charAt(0) == 'Y'){
+          product.price = msg.text.substring(3).toInt();
+
+        }
+        myBot.sendMessage(msg, "Processing");
+
+        // store product to database
+
+        status = "/done";
+        myBot.sendMessage(msg, "Update stock is complete");
+
+        // show getStock
+      }
+    }
+
+    delay(1000);
+  } while(!msg.text.equals("/done"));
+}
+
+void addProduct(long chatId) {
+  // using infunction loop and status based on step
+  // can be stop if user give certain command
+
+  // get product
+  // product name, etc
+  // store database
+
+  // show stock
+
+  myBot.sendTo(chatId, String("type /done to end the sesion"));
+  myBot.sendTo(chatId, String("Product name?"));
+
+  String status = "/start"; 
+  String messages[3];
+  struct Product product;
+  TBMessage msg;
+
+  do {
+    if (myBot.getNewMessage(msg)) {
+      msg.text.trim();
+
+      if (msg.text.equals("/done")) {
+        myBot.sendMessage(msg, "Cancel add product");
+        status = msg.text;
+
+      } else if (status.equals("/start")){
+        // get from database
+        product = getProduct(msg.text);
+        
+        // null checking
+          // set status to /done if the product already in database
+        
+
+        myBot.sendMessage(msg, "Product stock?");
+        status = "/quantity";
+
+      } else if (status.equals("/quantity")){
+        product.quantity = msg.text.toInt();
+
+        myBot.sendMessage(msg, "Product price?");
+        status = "/price";
+
+      } else if (status.equals("/price")){
+        product.price = msg.text.toInt();
+
+        myBot.sendMessage(msg, "Processing");
+        // store product to database
+
+        status = "/done";
+        myBot.sendMessage(msg, "Product successfully added");
+
+        // show getStock
+      }
+    }
+
+    delay(1000);
+  } while(!msg.text.equals("/done"));
+}
+
+void addTransaction(long chatId) {
+  myBot.sendTo(chatId, String("Add transaction"));
+  // will use struck to act like an object
+  // using infunction loop and status based on step
+  // can be stop if user give certain command
+
+  // date
+  // name
+  // get product
+  // select product
+  // confirmation
+    // recipt??
+  // store to database
+}
+
+void getMonthlyReport(long chatId){
+    myBot.sendTo(chatId, String("Monthly report"));
+
 }
 
 void setup() {
@@ -45,45 +220,6 @@ void setup() {
   lcd.backlight();
 }
 
-void getStock(TBMessage msg) {
-  myBot.sendMessage(msg, "Get product stock");
-}
-
-void updateStock(TBMessage msg){
-  myBot.sendMessage(msg, "Update product stock");
-  // using infunction loop and status based on step
-  // can be stop if user give certain command
-
-  // get product
-  // product name. etc
-  // update database
-}
-
-void addProduct(TBMessage msg) {
-  myBot.sendMessage(msg, "Add new product");
-  // using infunction loop and status based on step
-  // can be stop if user give certain command
-
-  // get product
-  // product name, etc
-  // store database
-}
-
-void addTransaction(TBMessage msg) {
-  myBot.sendMessage(msg, "Add new transaction");
-  // will use struck to act like an object
-  // using infunction loop and status based on step
-  // can be stop if user give certain command
-
-  // date
-  // name
-  // get product
-  // select product
-  // confirmation
-    // recipt??
-  // store to database
-}
-
 void loop() {
   if (WiFi.status() != WL_CONNECTED) {
     WiFi.begin(ssid, password);
@@ -94,7 +230,7 @@ void loop() {
     digitalWrite(LED_PIN3, HIGH);
 
     //  Telegram setup
-    client.setInsecure();  // skip certificate validation
+    client.setInsecure();
     myBot.setTelegramToken(token);
     Serial.println(myBot.begin() ? "Bot OK" : "Bot FAIL");
 
@@ -115,26 +251,34 @@ void loop() {
 
       //  check user
 
-      if (msg.text == "/start") {
+
+      msg.text.trim();
+      if (msg.text.equals("/start")) {
         myBot.sendMessage(msg, "Hello, this is RUNO House!");
         char message[] = "--bot commands--\n/getStock\n/updateStock\n/addProduct\n/addTransaction\n/getReport";
         myBot.sendMessage(msg, message);
-      } else if(msg.text == "/getStock") {
+
+      } else if(msg.text.equals("/getStock")) {
         getStock(msg);
+
       } else if(msg.text == "/updateStock") {
-        // conversation
-        updateStock(msg);
-      } else if(msg.text == "/addProduct") {
-        // conversation
-        addProduct(msg);
-      } else if(msg.text == "/addTransaction") {
-        // conversation
-        addTransaction(msg);
-      } else if(msg.text == "/getReport") {
-        myBot.sendMessage(msg, "Sales monthly report");
+        updateProduct(msg.chatId);
+
+      } else if(msg.text.equals("/addProduct")) {
+        addProduct(msg.chatId);
+
+      } else if(msg.text.equals("/addTransaction")) {
+        addTransaction(msg.chatId);
+
+      } else if(msg.text.equals("/getReport")) {
+        getMonthlyReport(msg.chatId);
+
+      } else {
+        char message[] = "--bot commands--\n/getStock\n/updateStock\n/addProduct\n/addTransaction\n/getReport";
+        myBot.sendMessage(msg, message);
+
       }
 
- 
       digitalWrite(LED_PIN, LOW); 
       digitalWrite(LED_PIN2, LOW);
       digitalWrite(LED_PIN3, HIGH);
