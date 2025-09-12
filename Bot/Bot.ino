@@ -31,6 +31,24 @@ struct Product {
     int price;
 };
 
+struct Date {
+  int day;
+  int month;
+  int year;
+};
+
+struct Order {
+  String product;
+  int quantity;
+};
+
+struct Transaction {
+    struct Date date;
+    struct Order order;
+    String customer;
+    unsigned int totalPrice;
+};
+
 void displayLCD(const char *pesan1, const char *pesan2) {
   lcd.setCursor((16 / 2) - (strlen(pesan1) / 2),0);
   lcd.print(pesan1);
@@ -72,123 +90,129 @@ void updateProduct(long chatId) {
   // show stock
 
   myBot.sendTo(chatId, String("type /done to end the sesion"));
-  myBot.sendTo(chatId, String("wich product will be updated?"));
+  myBot.sendTo(chatId, String("Product name:"));
 
   String status = "/start"; 
-  String messages[3];
   struct Product product;
   TBMessage msg;
 
   do {
     if (myBot.getNewMessage(msg)) {
-      msg.text.trim();
+      if (chatId == msg.chatId) {
+        msg.text.trim();
 
-      if (msg.text.equals("/done")) {
-        myBot.sendMessage(msg, "Cancel update item");
-        status = msg.text;
+        if (msg.text.equals("/done")) {
+          myBot.sendMessage(msg, "Cancel update item");
+          status = msg.text;
 
-      } else if (status.equals("/start")){
-        // get from database
-        product = getProduct(msg.text);
-        
-        // null checking
-          // set status to /done if there is no product
-        
+        } else if (status.equals("/start")){
+          // get from database
+          product = getProduct(msg.text);
+          
+          // null checking
+            // set status to /done if there is no product
+          
 
-        myBot.sendMessage(msg, "How many? [-/+].[quantity]");
-        status = "/quantity";
+          myBot.sendMessage(msg, "How many: [-/+].[quantity]");
+          status = "/quantity";
 
-      } else if (status.equals("/quantity")){
-        int quantity = msg.text.substring(3).toInt();
+        } else if (status.equals("/quantity")){
+          int quantity = msg.text.substring(3).toInt();
 
-        // update quantity of the product
-        product.quantity = updateQuantity(quantity, product.quantity, msg.text.substring(0, 1));
+          // update quantity of the product
+          product.quantity = updateQuantity(quantity, product.quantity, msg.text.substring(0, 1));
 
-        myBot.sendMessage(msg, "update product price? [n/y].[number]");
-        status = "/price";
+          myBot.sendMessage(msg, "Update product price? [n/y].[number]");
+          status = "/price";
 
-      } else if (status.equals("/price")){
-        if (msg.text.charAt(0) == 'y' || msg.text.charAt(0) == 'Y'){
-          product.price = msg.text.substring(3).toInt();
+        } else if (status.equals("/price")){
+          if (msg.text.charAt(0) == 'y' || msg.text.charAt(0) == 'Y'){
+            product.price = msg.text.substring(3).toInt();
 
+          }
+          myBot.sendMessage(msg, "Processing");
+
+          // store product to database
+
+          status = "/done";
+          myBot.sendMessage(msg, "Update stock is complete");
+
+          // show getStock
         }
-        myBot.sendMessage(msg, "Processing");
-
-        // store product to database
-
-        status = "/done";
-        myBot.sendMessage(msg, "Update stock is complete");
-
-        // show getStock
+      } else {
+        myBot.sendMessage(msg, "The bot is currently used by another user");
       }
     }
 
     delay(1000);
   } while(!msg.text.equals("/done"));
+
+  free(msg)
+  free(status)
+  free(product)
 }
 
 void addProduct(long chatId) {
-  // using infunction loop and status based on step
-  // can be stop if user give certain command
-
-  // get product
-  // product name, etc
-  // store database
-
   // show stock
 
   myBot.sendTo(chatId, String("type /done to end the sesion"));
-  myBot.sendTo(chatId, String("Product name?"));
+  myBot.sendTo(chatId, String("Product name:"));
 
   String status = "/start"; 
-  String messages[3];
   struct Product product;
   TBMessage msg;
 
   do {
     if (myBot.getNewMessage(msg)) {
-      msg.text.trim();
+      if (chatId == msg.chatId) {
+        msg.text.trim();
 
-      if (msg.text.equals("/done")) {
-        myBot.sendMessage(msg, "Cancel add product");
-        status = msg.text;
+        if (msg.text.equals("/done")) {
+          myBot.sendMessage(msg, "Cancel add product");
+          status = msg.text;
 
-      } else if (status.equals("/start")){
-        // get from database
-        product = getProduct(msg.text);
-        
-        // null checking
-          // set status to /done if the product already in database
-        
+        } else if (status.equals("/start")){
+          // get from database
+          product = getProduct(msg.text);
+          
+          // null checking
+            // set status to /done if the product already in database
+          
 
-        myBot.sendMessage(msg, "Product stock?");
-        status = "/quantity";
+          myBot.sendMessage(msg, "Product stock:");
+          status = "/quantity";
 
-      } else if (status.equals("/quantity")){
-        product.quantity = msg.text.toInt();
+        } else if (status.equals("/quantity")){
+          product.quantity = msg.text.toInt();
 
-        myBot.sendMessage(msg, "Product price?");
-        status = "/price";
+          myBot.sendMessage(msg, "Product price:");
+          status = "/price";
 
-      } else if (status.equals("/price")){
-        product.price = msg.text.toInt();
+        } else if (status.equals("/price")){
+          product.price = msg.text.toInt();
 
-        myBot.sendMessage(msg, "Processing");
-        // store product to database
+          myBot.sendMessage(msg, "Processing");
+          // store product to database
 
-        status = "/done";
-        myBot.sendMessage(msg, "Product successfully added");
+          status = "/done";
+          myBot.sendMessage(msg, "Product successfully added");
 
-        // show getStock
+          // show getStock
+        }
+      } else {
+        myBot.sendMessage(msg, "The bot is currently used by other user");
       }
     }
 
     delay(1000);
   } while(!msg.text.equals("/done"));
+
+  free(msg)
+  free(status)
+  free(product)
 }
 
 void addTransaction(long chatId) {
-  myBot.sendTo(chatId, String("Add transaction"));
   // will use struck to act like an object
   // using infunction loop and status based on step
   // can be stop if user give certain command
@@ -200,6 +224,68 @@ void addTransaction(long chatId) {
   // confirmation
     // recipt??
   // store to database
+
+  myBot.sendTo(chatId, String("type /done to end the sesion"));
+  myBot.sendTo(chatId, String("Transaction date: [dd-mm-yyy]"));
+
+  String status = "/start"; 
+  struct Transaction transaction;
+  TBMessage msg;
+
+  do {
+    if (myBot.getNewMessage(msg)) {
+      if (chatId == msg.chatId) {
+        msg.text.trim();
+
+        if (msg.text.equals("/done")) {
+          myBot.sendMessage(msg, "Cancel transaction");
+          status = msg.text;
+
+        } else if (status.equals("/start")){
+          int start = 0;
+          int index;
+          int i = 0;
+          String date[3];
+          while ((index = msg.text.indexOf('-', start)) != -1) {
+            date[i] = msg.text.substring(start, index);
+            start = index + 1;
+            i++;
+          }
+
+          transaction.date.day = date[0].toInt();
+          transaction.date.month = date[1].toInt();
+          transaction.date.year = date[2].toInt();
+
+          myBot.sendMessage(msg, "Customer name:");
+          status = "/customer";
+        } else if (status.equals("/cutomer")){
+          transaction.customer = msg.text;
+
+          myBot.sendMessage(msg, "Customer order: [name-quantity]");
+          status = "/order";
+        }else if (status.equals("/order")){
+
+          status = "/verify";
+        } else if (status.equals("/verify")){
+
+          // show getStock
+          status = "/process";
+        } else if (status.equals("/process")){
+          myBot.sendMessage(msg, "Processing");
+          // store product to database
+
+          status = "/done";
+          myBot.sendMessage(msg, "Product successfully added");
+
+          // show getStock
+        }
+      } else {
+        myBot.sendMessage(msg, "The bot is currently used by other user");
+      }
+    }
+
+    delay(1000);
+  } while(!msg.text.equals("/done"));
 }
 
 void getMonthlyReport(long chatId){
